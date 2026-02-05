@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">FresitaApp</string>
+    <string name="base_url">http://100.51.225.171:3000/</string>
 </resources>

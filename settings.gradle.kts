@@ -19,6 +19,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "FresitaApp"
+rootProject.name = "fresitapp"
 include(":app")
  

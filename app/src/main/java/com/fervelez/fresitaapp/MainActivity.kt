@@ -1,58 +1,151 @@
 package com.fervelez.fresitaapp
 
-import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
-import android.view.View
-import android.widget.ProgressBar
-import android.widget.TextView
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
-import androidx.appcompat.app.AppCompatActivity
-import androidx.recyclerview.widget.LinearLayoutManager
-import androidx.recyclerview.widget.RecyclerView
-import com.fervelez.fresitaapp.R
-import com.fervelez.fresitaapp.ui.main.adapter.FruitAdapter
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.ui.Modifier
+import com.fervelez.fresitaapp.model.AuthResponse
+import com.fervelez.fresitaapp.ui.screens.*
+import com.fervelez.fresitaapp.ui.theme.FresitaAppTheme
 import com.fervelez.fresitaapp.util.PreferenceHelper
+import com.fervelez.fresitaapp.viewmodel.AuthViewModel
 import com.fervelez.fresitaapp.viewmodel.FruitViewModel
-import com.google.android.material.floatingactionbutton.FloatingActionButton
+import com.fervelez.fresitaapp.viewmodel.Result
+import java.io.File
+import java.io.FileOutputStream
 
-class MainActivity : AppCompatActivity() {
-    private val viewModel: FruitViewModel by viewModels()
-    private lateinit var prefs: PreferenceHelper
-    private lateinit var adapter: FruitAdapter
+enum class Screen { LOGIN, REGISTER, MAIN, ADD }
+
+class MainActivity : ComponentActivity() {
+
+    private val authViewModel: AuthViewModel by viewModels()
+    private val fruitViewModel: FruitViewModel by viewModels()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+        val prefs = PreferenceHelper(this)
 
-        prefs = PreferenceHelper(this)
-
-        val rv = findViewById<RecyclerView>(R.id.rvFruits)
-        val fab = findViewById<FloatingActionButton>(R.id.fabAdd)
-        val tvEmpty = findViewById<TextView>(R.id.tvEmpty)
-        val progress = findViewById<ProgressBar>(R.id.progress)
-
-        adapter = FruitAdapter(this, mutableListOf())
-        rv.layoutManager = LinearLayoutManager(this)
-        rv.adapter = adapter
-
-        viewModel.loading.observe(this) { progress.visibility = if (it) View.VISIBLE else View.GONE }
-
-        viewModel.fruits.observe(this) { list ->
-            adapter.update(list)
-            tvEmpty.visibility = if (list.isEmpty()) View.VISIBLE else View.GONE
+        if (prefs.getUserId() != -1) {
+            fruitViewModel.loadFruits()
         }
 
-        viewModel.error.observe(this) { if (it != null) { tvEmpty.text = it; tvEmpty.visibility = View.VISIBLE } }
+        setContent {
+            FresitaAppTheme {
+                var currentScreen by remember {
+                    mutableStateOf(
+                        if (prefs.getUserId() == -1) Screen.LOGIN else Screen.MAIN
+                    )
+                }
 
-        viewModel.loadFruits()
+                val fruits by fruitViewModel.fruits.observeAsState(emptyList())
+                val loading by fruitViewModel.loading.observeAsState(false)
+                val error by fruitViewModel.error.observeAsState(null)
 
-        fab.setOnClickListener {
-            startActivity(Intent(this, AddFruitActivity::class.java))
+                var selectedImage by remember { mutableStateOf<Uri?>(null) }
+
+                val imagePicker = rememberLauncherForActivityResult(
+                    ActivityResultContracts.GetContent()
+                ) { uri ->
+                    selectedImage = uri
+                }
+
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    when (currentScreen) {
+
+                        Screen.LOGIN -> LoginScreen(
+                            onLogin = { correo, pass ->
+                                authViewModel.login(correo, pass)
+                                    .observe(this@MainActivity) { result ->
+                                        if (result is Result.Success<*>) {
+                                            val auth = result.data as AuthResponse
+                                            prefs.saveToken(auth.token)
+                                            prefs.saveUserId(auth.usuario.id)
+                                            prefs.saveUserName(auth.usuario.nombre)
+                                            fruitViewModel.loadFruits()
+                                            currentScreen = Screen.MAIN
+                                        }
+                                    }
+                            },
+                            onRegisterClick = { currentScreen = Screen.REGISTER }
+                        )
+
+                        Screen.REGISTER -> RegisterScreen(
+                            onRegister = { nombre, correo, pass, onDone ->
+                                authViewModel.register(nombre, correo, pass)
+                                    .observe(this@MainActivity) { res ->
+                                        if (res is Result.Success<*>) {
+                                            onDone(true, null)
+                                            currentScreen = Screen.LOGIN
+                                        } else if (res is Result.Error) {
+                                            onDone(false, res.message)
+                                        }
+                                    }
+                            },
+                            onBack = { currentScreen = Screen.LOGIN }
+                        )
+
+                        Screen.MAIN -> FruitListScreen(
+                            fruits = fruits,
+                            loading = loading,
+                            error = error,
+                            onAddClick = {
+                                selectedImage = null
+                                currentScreen = Screen.ADD
+                            },
+                            onLogoutClick = {
+                                prefs.clear()
+                                currentScreen = Screen.LOGIN
+                            }
+                        )
+
+                        Screen.ADD -> AddFruitScreen(
+                            onPickImage = { imagePicker.launch("image/*") },
+                            selectedImage = selectedImage,
+                            onAdd = { nombre, nc, temp, clas, onResult ->
+                                val userId = prefs.getUserId()
+                                if (userId == -1) {
+                                    onResult(false, "Inicia sesión")
+                                    return@AddFruitScreen
+                                }
+
+                                val file = selectedImage?.let { uriToFile(it) }
+
+                                fruitViewModel.addFruit(
+                                    nombre, nc, temp, clas, file, userId
+                                ) { ok, msg ->
+                                    onResult(ok, msg)
+                                    if (ok) {
+                                        currentScreen = Screen.MAIN
+                                        fruitViewModel.loadFruits()
+                                    }
+                                }
+                            },
+                            onCancel = { currentScreen = Screen.MAIN }
+                        )
+                    }
+                }
+            }
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        viewModel.loadFruits()
+    private fun uriToFile(uri: Uri): File {
+        val input = contentResolver.openInputStream(uri)!!
+        val file = File(cacheDir, "temp_image_${System.currentTimeMillis()}.png")
+        val output = FileOutputStream(file)
+        input.copyTo(output)
+        input.close()
+        output.close()
+        return file
     }
 }

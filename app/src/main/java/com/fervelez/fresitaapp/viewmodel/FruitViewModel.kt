@@ -20,8 +20,11 @@ class FruitViewModel(application: Application): AndroidViewModel(application) {
         viewModelScope.launch {
             try {
                 val resp = repo.getFruits()
-                if (resp.isSuccessful) fruits.postValue(resp.body() ?: emptyList()) else error.postValue(resp.message())
-            } catch (e: Exception) { error.postValue(e.message) }
+                if (resp.isSuccessful) fruits.postValue(resp.body() ?: emptyList())
+                else error.postValue(resp.message())
+            } catch (e: Exception) {
+                error.postValue(e.message)
+            }
             loading.postValue(false)
         }
     }
@@ -31,7 +34,9 @@ class FruitViewModel(application: Application): AndroidViewModel(application) {
             try {
                 val resp = repo.createFruit(nombre, nombreCientifico, temporada, clasificacion, image, usuarioId)
                 if (resp.isSuccessful) onDone(true, null) else onDone(false, resp.message())
-            } catch (e: Exception) { onDone(false, e.message) }
+            } catch (e: Exception) {
+                onDone(false, e.message)
+            }
         }
     }
 }

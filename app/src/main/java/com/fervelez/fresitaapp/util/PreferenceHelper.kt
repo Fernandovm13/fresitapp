@@ -13,4 +13,6 @@ class PreferenceHelper(context: Context) {
 
     fun saveUserName(name: String) { prefs.edit().putString("user_name", name).apply() }
     fun getUserName(): String? = prefs.getString("user_name", null)
+
+    fun clear() { prefs.edit().clear().apply() }
 }

@@ -1,4 +1,4 @@
-package fervelez.Fresitapp.resitapp.api
+package com.fervelez.fresitaapp.api
 
 import com.fervelez.fresitaapp.model.AuthResponse
 import com.fervelez.fresitaapp.model.Fruit
