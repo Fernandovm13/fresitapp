@@ -32,4 +32,23 @@ class FruitRepository {
 
         api.createFruit(nombreBody, cientificoBody, temporadaBody, clasBody, imagenPart, userBody)
     }
+
+    suspend fun updateFruit(
+        id: Int,
+        nombre: String,
+        nombreCientifico: String?,
+        temporada: String?,
+        clasificacion: String?,
+        imageFile: File?
+    ) = run {
+        val body = mapOf(
+            "nombre" to nombre,
+            "nombre_cientifico" to nombreCientifico,
+            "temporada" to temporada,
+            "clasificacion" to clasificacion
+        )
+        api.updateFruit(id, body)
+    }
+
+    suspend fun deleteFruit(id: Int) = api.deleteFruit(id)
 }

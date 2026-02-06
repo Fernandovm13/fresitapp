@@ -29,10 +29,33 @@ class FruitViewModel(application: Application): AndroidViewModel(application) {
         }
     }
 
-    fun addFruit(nombre: String, nombreCientifico: String?, temporada: String?, clasificacion: String?, image: File?, usuarioId: Int, onDone: (Boolean,String?)->Unit) {
+    fun addFruit(nombre: String, nombreCientifico: String?, temporada: String?, clasificacion: String?, image: File?, usuarioId: Int, onDone: (Boolean, String?) -> Unit) {
         viewModelScope.launch {
             try {
                 val resp = repo.createFruit(nombre, nombreCientifico, temporada, clasificacion, image, usuarioId)
+                if (resp.isSuccessful) onDone(true, null) else onDone(false, resp.message())
+            } catch (e: Exception) {
+                onDone(false, e.message)
+            }
+        }
+    }
+
+    fun updateFruit(id: Int, nombre: String, nombreCientifico: String?, temporada: String?, clasificacion: String?, image: File?, onDone: (Boolean, String?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val resp = repo.updateFruit(id, nombre, nombreCientifico, temporada, clasificacion, image)
+                if (resp.isSuccessful) onDone(true, null)
+                else onDone(false, "Error: ${resp.code()}")
+            } catch (e: Exception) {
+                onDone(false, e.message)
+            }
+        }
+    }
+
+    fun deleteFruit(id: Int, onDone: (Boolean, String?) -> Unit) {
+        viewModelScope.launch {
+            try {
+                val resp = repo.deleteFruit(id)
                 if (resp.isSuccessful) onDone(true, null) else onDone(false, resp.message())
             } catch (e: Exception) {
                 onDone(false, e.message)

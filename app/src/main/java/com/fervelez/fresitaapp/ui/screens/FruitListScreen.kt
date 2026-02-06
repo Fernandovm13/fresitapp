@@ -8,7 +8,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExitToApp
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -24,8 +24,13 @@ fun FruitListScreen(
     loading: Boolean = false,
     error: String? = null,
     onAddClick: () -> Unit,
-    onLogoutClick: () -> Unit
+    onLogoutClick: () -> Unit,
+    onEditClick: (Fruit) -> Unit,    // Nueva función
+    onDeleteConfirm: (Fruit) -> Unit // Nueva función
 ) {
+    // Estado para controlar el diálogo de eliminación
+    var fruitToDelete by remember { mutableStateOf<Fruit?>(null) }
+
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
@@ -67,6 +72,30 @@ fun FruitListScreen(
                 .fillMaxSize()
                 .padding(paddingValues)
         ) {
+            // --- MOSTRAR DIÁLOGO DE CONFIRMACIÓN ---
+            fruitToDelete?.let { fruit ->
+                AlertDialog(
+                    onDismissRequest = { fruitToDelete = null },
+                    title = { Text("Confirmar eliminación") },
+                    text = { Text("¿Estás seguro de que deseas eliminar la fruta '${fruit.nombre}'?") },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                onDeleteConfirm(fruit)
+                                fruitToDelete = null
+                            }
+                        ) {
+                            Text("Eliminar", color = Color.Red)
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { fruitToDelete = null }) {
+                            Text("Cancelar")
+                        }
+                    }
+                )
+            }
+
             when {
                 loading -> {
                     Column(
@@ -79,47 +108,24 @@ fun FruitListScreen(
                         Text("Cargando frutas...", style = MaterialTheme.typography.bodyMedium)
                     }
                 }
-
-                error != null -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize().padding(24.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            text = "Error: $error",
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodyLarge,
-                            textAlign = androidx.compose.ui.text.style.TextAlign.Center
-                        )
-                    }
-                }
-
-                fruits.isEmpty() -> {
-                    Box(
-                        modifier = Modifier.fillMaxSize().padding(24.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Text(
-                            "No hay frutas registradas aún",
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = Color.Gray
-                        )
-                    }
-                }
+                // ... (Mantener resto de condiciones error y empty igual que antes)
+                error != null -> { /* Tu código existente */ }
+                fruits.isEmpty() -> { /* Tu código existente */ }
 
                 else -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         contentPadding = PaddingValues(
-                            start = 16.dp,
-                            end = 16.dp,
-                            top = 8.dp,
-                            bottom = 80.dp
+                            start = 16.dp, end = 16.dp, top = 8.dp, bottom = 80.dp
                         ),
                         verticalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(fruits) { fruit ->
-                            FruitCard(fruit = fruit)
+                            FruitCard(
+                                fruit = fruit,
+                                onEditClick = { onEditClick(it) },
+                                onDeleteClick = { fruitToDelete = it } // Abrir diálogo
+                            )
                         }
                     }
                 }

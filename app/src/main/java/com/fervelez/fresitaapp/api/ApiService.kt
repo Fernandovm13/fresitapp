@@ -27,4 +27,13 @@ interface ApiService {
         @Part imagen: MultipartBody.Part?,
         @Part("usuario_id") usuarioId: RequestBody
     ): Response<Map<String, Any>>
+
+    @PUT("/api/frutas/{id}")
+    suspend fun updateFruit(
+        @Path("id") id: Int,
+        @Body body: Map<String, String?>
+    ): Response<Map<String, Any>>
+
+    @DELETE("/api/frutas/{id}")
+    suspend fun deleteFruit(@Path("id") id: Int): Response<Map<String, Any>>
 }
