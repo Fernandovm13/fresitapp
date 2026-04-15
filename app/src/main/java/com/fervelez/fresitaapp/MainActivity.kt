@@ -13,14 +13,14 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
-import com.fervelez.fresitaapp.model.AuthResponse
-import com.fervelez.fresitaapp.model.Fruit
-import com.fervelez.fresitaapp.ui.screens.*
-import com.fervelez.fresitaapp.ui.theme.FresitaAppTheme
-import com.fervelez.fresitaapp.util.PreferenceHelper
-import com.fervelez.fresitaapp.viewmodel.AuthViewModel
-import com.fervelez.fresitaapp.viewmodel.FruitViewModel
-import com.fervelez.fresitaapp.viewmodel.Result
+import com.fervelez.fresitaapp.domain.model.AuthResponse
+import com.fervelez.fresitaapp.domain.model.Fruit
+import com.fervelez.fresitaapp.presentation.ui.screens.*
+import com.fervelez.fresitaapp.presentation.ui.theme.FresitaAppTheme
+import com.fervelez.fresitaapp.core.util.PreferenceHelper
+import com.fervelez.fresitaapp.presentation.viewmodel.AuthViewModel
+import com.fervelez.fresitaapp.presentation.viewmodel.FruitViewModel
+import com.fervelez.fresitaapp.presentation.viewmodel.Result
 import java.io.File
 import java.io.FileOutputStream
 
