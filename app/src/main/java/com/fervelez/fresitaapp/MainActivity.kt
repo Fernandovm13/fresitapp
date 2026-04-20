@@ -45,12 +45,12 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf(if (prefs.getUserId() == -1) Screen.LOGIN else Screen.MAIN)
                 }
 
-                // --- ESTADOS DE DATOS ---
+
                 val fruits by fruitViewModel.fruits.observeAsState(emptyList())
                 val loading by fruitViewModel.loading.observeAsState(false)
                 val error by fruitViewModel.error.observeAsState(null)
 
-                // --- ESTADOS DE EDICIÓN ---
+
                 var fruitToEdit by remember { mutableStateOf<Fruit?>(null) }
                 var selectedImage by remember { mutableStateOf<Uri?>(null) }
 
@@ -96,13 +96,13 @@ class MainActivity : ComponentActivity() {
                             onBack = { currentScreen = Screen.LOGIN }
                         )
 
-                        // -------- PANTALLA PRINCIPAL CON EDITAR Y ELIMINAR --------
+
                         Screen.MAIN -> FruitListScreen(
                             fruits = fruits,
                             loading = loading,
                             error = error,
                             onAddClick = {
-                                fruitToEdit = null // Es una fruta nueva
+                                fruitToEdit = null
                                 selectedImage = null
                                 currentScreen = Screen.ADD
                             },
@@ -111,12 +111,11 @@ class MainActivity : ComponentActivity() {
                                 currentScreen = Screen.LOGIN
                             },
                             onEditClick = { fruit ->
-                                fruitToEdit = fruit // Guardamos la fruta a editar
-                                selectedImage = null // Reiniciamos imagen (o cargar la actual si se desea)
+                                fruitToEdit = fruit
+                                selectedImage = null
                                 currentScreen = Screen.ADD
                             },
                             onDeleteConfirm = { fruit ->
-                                // Aquí llamas a tu función de eliminar del ViewModel
                                 fruitViewModel.deleteFruit(fruit.id) { success, msg ->
                                     if (success) {
                                         Toast.makeText(this@MainActivity, "Eliminado con éxito", Toast.LENGTH_SHORT).show()
@@ -128,9 +127,8 @@ class MainActivity : ComponentActivity() {
                             }
                         )
 
-                        // -------- PANTALLA ADD / EDIT --------
                         Screen.ADD -> AddFruitScreen(
-                            fruitToEdit = fruitToEdit, // Pasamos la fruta si existe
+                            fruitToEdit = fruitToEdit,
                             onPickImage = { imagePicker.launch("image/*") },
                             selectedImage = selectedImage,
                             onAdd = { nombre, nc, temp, clas, onResult ->
@@ -138,7 +136,7 @@ class MainActivity : ComponentActivity() {
                                 val file = selectedImage?.let { uriToFile(it) }
 
                                 if (fruitToEdit == null) {
-                                    // MODO AGREGAR
+
                                     fruitViewModel.addFruit(nombre, nc, temp, clas, file, userId) { ok, msg ->
                                         onResult(ok, msg)
                                         if (ok) {
@@ -147,7 +145,6 @@ class MainActivity : ComponentActivity() {
                                         }
                                     }
                                 } else {
-                                    // MODO EDITAR
                                     fruitViewModel.updateFruit(fruitToEdit!!.id, nombre, nc, temp, clas, file) { ok, msg ->
                                         onResult(ok, msg)
                                         if (ok) {
