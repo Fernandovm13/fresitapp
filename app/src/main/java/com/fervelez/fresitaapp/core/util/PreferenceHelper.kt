@@ -1,4 +1,4 @@
-package com.fervelez.fresitaapp.core.util
+﻿package com.fervelez.fresitaapp.core.util
 
 import android.content.Context
 
@@ -16,3 +16,4 @@ class PreferenceHelper(context: Context) {
 
     fun clear() { prefs.edit().clear().apply() }
 }
+

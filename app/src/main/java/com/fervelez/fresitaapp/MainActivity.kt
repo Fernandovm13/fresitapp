@@ -1,4 +1,4 @@
-package com.fervelez.fresitaapp
+﻿package com.fervelez.fresitaapp
 
 import android.net.Uri
 import android.os.Bundle
@@ -13,14 +13,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Modifier
-import com.fervelez.fresitaapp.domain.model.AuthResponse
-import com.fervelez.fresitaapp.domain.model.Fruit
-import com.fervelez.fresitaapp.presentation.ui.screens.*
-import com.fervelez.fresitaapp.presentation.ui.theme.FresitaAppTheme
+import com.fervelez.fresitaapp.features.auth.domain.model.AuthResponse
+import com.fervelez.fresitaapp.features.fruits.domain.model.Fruit
+import com.fervelez.fresitaapp.features.auth.presentation.ui.screens.LoginScreen
+import com.fervelez.fresitaapp.features.auth.presentation.ui.screens.RegisterScreen
+import com.fervelez.fresitaapp.features.fruits.presentation.ui.screens.AddFruitScreen
+import com.fervelez.fresitaapp.features.fruits.presentation.ui.screens.FruitListScreen
+import com.fervelez.fresitaapp.core.ui.theme.FresitaAppTheme
 import com.fervelez.fresitaapp.core.util.PreferenceHelper
-import com.fervelez.fresitaapp.presentation.viewmodel.AuthViewModel
-import com.fervelez.fresitaapp.presentation.viewmodel.FruitViewModel
-import com.fervelez.fresitaapp.presentation.viewmodel.Result
+import com.fervelez.fresitaapp.features.auth.presentation.viewmodel.AuthViewModel
+import com.fervelez.fresitaapp.features.fruits.presentation.viewmodel.FruitViewModel
+import com.fervelez.fresitaapp.core.util.Result
 import java.io.File
 import java.io.FileOutputStream
 
@@ -45,11 +48,9 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf(if (prefs.getUserId() == -1) Screen.LOGIN else Screen.MAIN)
                 }
 
-
                 val fruits by fruitViewModel.fruits.observeAsState(emptyList())
                 val loading by fruitViewModel.loading.observeAsState(false)
                 val error by fruitViewModel.error.observeAsState(null)
-
 
                 var fruitToEdit by remember { mutableStateOf<Fruit?>(null) }
                 var selectedImage by remember { mutableStateOf<Uri?>(null) }
@@ -63,7 +64,6 @@ class MainActivity : ComponentActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     when (currentScreen) {
-
                         Screen.LOGIN -> LoginScreen(
                             onLogin = { correo, pass ->
                                 authViewModel.login(correo, pass)
@@ -95,7 +95,6 @@ class MainActivity : ComponentActivity() {
                             },
                             onBack = { currentScreen = Screen.LOGIN }
                         )
-
 
                         Screen.MAIN -> FruitListScreen(
                             fruits = fruits,
@@ -136,7 +135,6 @@ class MainActivity : ComponentActivity() {
                                 val file = selectedImage?.let { uriToFile(it) }
 
                                 if (fruitToEdit == null) {
-
                                     fruitViewModel.addFruit(nombre, nc, temp, clas, file, userId) { ok, msg ->
                                         onResult(ok, msg)
                                         if (ok) {
